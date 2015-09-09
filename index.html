@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<!--script src="~pnowojski/civ4battle/civ4battle.js"-->
+<script src="civ4battle.js">
+</script>
+<script src="Chart.js"></script>
+<script type="text/javascript">
+
+function floatToPercent(value)
+{
+    return (value * 100).toFixed(2).toString() + "%";
+}
+function runSimulation() {
+    document.getElementById("debug").innerHTML = "";
+	document.getElementById("attackersOutput").innerHTML = "";
+	document.getElementById("defendersOutput").innerHTML = "";
+	
+	var attackers = [];
+	for (var i = 1; i <= 4; i++)
+	{
+		for (var count = 1; count <= Number(document.getElementById("attacker" + i + "Count").value); count++)
+		{
+			var attacker = new Unit(Number(document.getElementById("attacker" + i + "Strength").value), 
+									Number(document.getElementById("attacker" + i + "Hp").value), 
+									1.0,
+									Number(document.getElementById("attacker" + i + "FirstStrikes").value));
+			attackers.push(attacker);
+		}
+	}
+                            
+    var defender = new Unit(Number(document.getElementById("defenderStrength").value), 
+                            Number(document.getElementById("defenderHp").value), 
+                            1.0,
+                            Number(document.getElementById("defenderFirstStrikes").value));
+
+    var states = multiBattle(attackers, defender);
+	
+    var attackersStates = states[0];
+    var defenderStates = states[1];
+    
+    for (var i = 0; i < attackersStates.length; i++)
+    {
+		printUnit(true, attackersStates[i], "Attacker" + (i+1));
+    }
+	printUnit(false, defenderStates, "Defender");
+}
+
+function makeid()
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+
+function printUnit(isAttacker, states, msg)
+{
+	var element = document.getElementById(isAttacker ? "attackersOutput" : "defendersOutput");
+	element.appendChild(document.createTextNode(msg));
+	element.appendChild(document.createElement("br"));
+    for (var hp in states)
+    {
+        element.appendChild(document.createTextNode("hp: " + hp + " " +  floatToPercent(states[hp])));
+		element.appendChild(document.createElement("br"));
+    }
+	
+	var bold = document.createElement("b");
+	bold.appendChild(document.createTextNode("win chances: " + floatToPercent(winChances(states))));
+	element.appendChild(bold);
+	element.appendChild(document.createElement("br"));
+}
+
+function printOutput(msg) {
+  document.getElementById("debug").appendChild(document.createTextNode(msg));
+  document.getElementById("debug").appendChild(document.createElement("br"));
+}
+
+</script>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>Civilization 4: Beyond the Sword battle simulator</title>
+
+</head>
+
+
+<body style='font-family="Tahoma"'>
+
+    <p>Civilization 4: Beyond the Sword battle simulator</p>
+	<p>Initial strength is unit's base strength with bonus modifiers but UNADJUSTED by health. Or in other words, following <A href="http://www.civfanatics.com/civ4/strategy/combat_explained.php">civfanatics'</A> terminology, it is <i>modified strength</i> UNADJUSTED by health. For example, archer defending on forest with 50hp/100hp has <b>initial strength</b> equal to 3 * 1.5 = 4.5, while it's <b>modified strength</b> is 4.5 * 50/100 = 2.25</p>
+
+    <form>
+    Attackers<br />
+    <table border="1">
+	<TR>
+		<TH>Initial strength</TH>
+		<TH>HP</TH>
+		<TH>First Strike</TH>
+		<TH>Count</TH>
+	</TR>
+	<TR>
+		<TD><input type="text" id="attacker1Strength"		size="5" 	value="3"></TD>
+		<TD><input type="text" id="attacker1Hp"              size="5" 	value="100"></TD>
+		<TD><input type="text" id="attacker1FirstStrikes" 	size="5" 	value="1"></TD>
+		<TD><input type="text" id="attacker1Count" 	size="5" 	value="1"></TD>
+	</TR>  
+	<TR>
+		<TD><input type="text" id="attacker2Strength"		size="5" 	value="0"></TD>
+		<TD><input type="text" id="attacker2Hp"              size="5" 	value="100"></TD>
+		<TD><input type="text" id="attacker2FirstStrikes" 	size="5" 	value="0"></TD>
+		<TD><input type="text" id="attacker2Count" 	size="5" 	value="0"></TD>
+	</TR>  
+	<TR>
+		<TD><input type="text" id="attacker3Strength"		size="5" 	value="0"></TD>
+		<TD><input type="text" id="attacker3Hp"              size="5" 	value="100"></TD>
+		<TD><input type="text" id="attacker3FirstStrikes" 	size="5" 	value="0"></TD>
+		<TD><input type="text" id="attacker3Count" 	size="5" 	value="0"></TD>
+	</TR>  
+	<TR>
+		<TD><input type="text" id="attacker4Strength"		size="5" 	value="0"></TD>
+		<TD><input type="text" id="attacker4Hp"              size="5" 	value="100"></TD>
+		<TD><input type="text" id="attacker4FirstStrikes" 	size="5" 	value="0"></TD>
+		<TD><input type="text" id="attacker4Count" 	size="5" 	value="0"></TD>
+	</TR>  
+    </table>
+	<p id="attackersOutput"></p>
+
+    Defender<br />
+    <table border="1">
+      <TR>
+	    <TH>Initial strength</TH>
+	    <TH>HP</TH>
+	    <TH>First Strike</TH>
+      </TR>
+      <TR>
+        <TD><input type="text" id="defenderStrength"		size="5" 	value="3"></TD>
+	    <TD><input type="text" id="defenderHp"              size="5" 	value="100"></TD>
+        <TD><input type="text" id="defenderFirstStrikes" 	size="5" 	value="1"></TD>
+      </TR>  
+    </table>
+	<p id="defendersOutput"></p>
+
+    </form>
+    <button onclick="runSimulation()">Run simulation</button>
+
+    <p id="debug">Debug:</p>
+    <p>Author: Piotr Nowojski<br/>
+</body>
+
+
+
+</html>
+
+
+
